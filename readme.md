@@ -89,9 +89,3 @@ Returns the users in a channel
 ### Params:
 
 - `channel`: the channel to return users for (handled by client routinely)
-
-Adds the user to the public channel.
-
-### Params:
-
-- `user`: the the user (handled by client)
