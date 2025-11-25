@@ -98,6 +98,8 @@ final class HttpRequest implements Runnable {
         protocols.put("makePost", "makePost");
         protocols.put("joinPrivate", "joinPrivate");
         protocols.put("leavePrivate", "leavePrivate");
+	protocols.put("joinPublic", "joinPublic");
+	protocols.put("leavePublic", "leavePublic");
         protocols.put("getUsers", "getUsers");
     }
 
@@ -184,7 +186,11 @@ final class HttpRequest implements Runnable {
                     return JoinPrivate(params);
                 case "leavePrivate":
                     return LeavePrivate(params);
-                case "getUsers":
+                case "joinPublic":
+		    return JoinPublic(params); 
+		case "leavePublic": 
+	  	    return LeavePublic(params);
+		case "getUsers":
                     return GetUsers(params);
                 default:
                     return "{\"error\": \"Does not exist: " + protocol + "\"}";
@@ -345,6 +351,35 @@ final class HttpRequest implements Runnable {
         return "{\"error\": \"User not found in " + channel + "\"}";
     }
 
+    // Join the public board
+    private String JoinPublic(Map<String, String> params) {
+        String newUser = params.get("user");
+        if (newUser == null) {
+            return "{\"error\": \"User parameter required\"}";
+        }
+        
+        // Check if already in public
+        if (publicUsers.contains(newUser)) {
+            return "{\"message\": \"Already in public board\", \"user\": \"" + newUser + "\"}";
+        }
+        
+        publicUsers.add(newUser);
+        return "{\"success\": \"Joined public board\", \"user\": \"" + newUser + "\"}";
+    }
+
+    // Leave the public board
+    private String LeavePublic(Map<String, String> params) {
+        String leaveUser = params.get("user");
+        if (leaveUser == null) {
+            return "{\"error\": \"User parameter required\"}";
+        }
+        
+        if (publicUsers.contains(leaveUser)) {
+            publicUsers.remove(leaveUser);
+            return "{\"success\": \"Left public board\", \"user\": \"" + leaveUser + "\"}";
+        }
+        return "{\"error\": \"User not in public board\"}";
+    }
     // returns the list of current users in a channel (should be shared in a channel
     // when a user leaves or joins)
     private String GetUsers(Map<String, String> params) {
