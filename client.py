@@ -27,7 +27,7 @@ class BulletinBoardClient: #main bulletin board class
             self.connected = True
             return True
         except Exception as e:
-            print(f"Error connecting to server: {e}")
+            print(f"Client Error connecting to server: {e}")
             return False
     
     def send_request(self, protocol, params):
@@ -68,11 +68,13 @@ class BulletinBoardClient: #main bulletin board class
                 return {"error": "Invalid response format"}
                 
         except Exception as e:
+            if "Invalid control character" in str(e):
+                return {"error": f"Request failed: Invalid character used. Please only use ascii-encodable characters"}
             return {"error": f"Request failed: {e}"}
     
     def join_public(self):#joins the public message board function
         if not self.username:
-            print("Error: You must set a username first")
+            print("Client Error: You must set a username first")
             return
         
         response = self.send_request("joinPublic", {"user": self.username})
@@ -83,11 +85,11 @@ class BulletinBoardClient: #main bulletin board class
             self.display_users("public")
             self.display_recent_posts("public")
         elif "error" in response:
-            print(f"Error: {response['error']}")
+            print(f"Server Error: {response['error']}")
     
     def leave_public(self):#leaves public message board class
         if not self.username:
-            print("Error: You must set a username first")
+            print("Client Error: You must set a username first")
             return
         
         response = self.send_request("leavePublic", {"user": self.username})
@@ -96,11 +98,11 @@ class BulletinBoardClient: #main bulletin board class
             self.current_groups.discard("public")
             print(f"✓ Left public board")
         elif "error" in response:
-            print(f"Error: {response['error']}")
+            print(f"Server Error: {response['error']}")
     
     def post_message(self, subject, content, channel="public"): #posts the message board class 
         if not self.username:
-            print("Error: You must set a username first")
+            print("Client Error: You must set a username first")
             return
         
         params = {
@@ -122,7 +124,7 @@ class BulletinBoardClient: #main bulletin board class
                 print(f"Content: {post['content']}")
                 print()
         elif "error" in response:
-            print(f"Error: {response['error']}")
+            print(f"Server Error: {response['error']}")
     
     def display_users(self, channel="public"): #displays the list of users into the channel 
         params = {"channel": channel}
@@ -141,11 +143,11 @@ class BulletinBoardClient: #main bulletin board class
                     print(f"{marker} {user}")
             print(f"{'='*50}\n")
         elif "error" in response:
-            print(f"Error: {response['error']}")
+            print(f"Server Error: {response['error']}")
     
     def display_recent_posts(self, channel="public"): #displays the 2 most recent messages function
         if not self.username:
-            print("Error: You must set a username first")
+            print("Client Error: You must set a username first")
             return
             
         params = {"channel": channel, "user": self.username}
@@ -169,11 +171,11 @@ class BulletinBoardClient: #main bulletin board class
             print(f"\nUse '%message <id>' or '%groupmessage {channel} <id>' to view full content")
             print()
         elif "error" in response:
-            print(f"Error: {response['error']}")
+            print(f"Server Error: {response['error']}")
     
     def get_message(self, message_id, channel="public"): #gets content for specific message id
         if not self.username:
-            print("Error: You must set a username first")
+            print("Client Error: You must set a username first")
             return
         params = {"channel": channel, "id": str(message_id), "user": self.username}
         response = self.send_request("getPost", params)
@@ -190,7 +192,7 @@ class BulletinBoardClient: #main bulletin board class
             print(post['content'])
             print(f"{'='*50}\n")
         elif "error" in response:
-            print(f"Error: {response['error']}")
+            print(f"Server Error: {response['error']}")
     
     def list_groups(self): #lists all groups 
         """List all available private groups"""
@@ -205,12 +207,12 @@ class BulletinBoardClient: #main bulletin board class
     
     def join_group(self, group_name): #joins group
         if not self.username:
-            print("Error: You must set a username first")
+            print("Client Error: You must set a username first")
             return
         
         valid_groups = ["private1", "private2", "private3", "private4", "private5"]
         if group_name not in valid_groups:
-            print(f"Error: Invalid group name. Must be one of: {', '.join(valid_groups)}")
+            print(f"Client Error: Invalid group name. Must be one of: {', '.join(valid_groups)}")
             return
         
         params = {"user": self.username, "channel": group_name}
@@ -223,11 +225,11 @@ class BulletinBoardClient: #main bulletin board class
             self.display_users(group_name)
             self.display_recent_posts(group_name)
         elif "error" in response:
-            print(f"Error: {response['error']}")
+            print(f"Server Error: {response['error']}")
     
     def leave_group(self, group_name): #leaves group
         if not self.username:
-            print("Error: You must set a username first")
+            print("Client Error: You must set a username first")
             return
         
         params = {"user": self.username, "channel": group_name}
@@ -237,7 +239,7 @@ class BulletinBoardClient: #main bulletin board class
             self.current_groups.discard(group_name)
             print(f"✓ Left {group_name}")
         elif "error" in response:
-            print(f"Error: {response['error']}")
+            print(f"Server Error: {response['error']}")
     
     def disconnect(self): #Leaves all groups
         if self.username:
@@ -328,7 +330,7 @@ def main():
             
             #Check if connected for other commands
             elif not client.connected:
-                print("Error: Not connected to server. Use %connect first.")
+                print("Client Error: Not connected to server. Use %connect first.")
                 continue
             
             #Part 1: Public board commands
@@ -358,7 +360,7 @@ def main():
                     msg_id = int(args.strip())
                     client.get_message(msg_id)
                 except ValueError:
-                    print("Error: Message ID must be a number")
+                    print("Client Error: Message ID must be a number")
             
             #Part 2: Private group commands
             elif cmd == "%groups":
@@ -416,7 +418,7 @@ def main():
                 try:
                     client.get_message(int(msg_id), group_name)
                 except ValueError:
-                    print("Error: Message ID must be a number")
+                    print("ClientError: Message ID must be a number")
             
             else:
                 print(f"Unknown command: {cmd}. Type %help for available commands.")
@@ -427,7 +429,7 @@ def main():
                 client.disconnect()
             sys.exit(0)
         except Exception as e:
-            print(f"Error: {e}")
+            print(f"Client Error: {e}")
             import traceback
             traceback.print_exc()
 
